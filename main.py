@@ -15,6 +15,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(SessionMiddleware, secret_key="spendly-secret-key")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
@@ -78,7 +80,48 @@ def logout(request: Request):
 
 @app.get("/profile", response_class=HTMLResponse)
 def profile(request: Request, user_id: int = Depends(get_current_user)):
-    return HTMLResponse(f"Welcome to your profile, User ID: {user_id}!")
+    # Hardcoded data to match reference image
+    user_info = {
+        "name": "Amir",
+        "email": "amir@gmail.com",
+        "member_since": "January 2024",
+        "initials": "A"
+    }
+    summary_stats = {
+        "total_spent": "₹12,450.75",
+        "transaction_count": 8,
+        "top_category": "Food"
+    }
+    transactions = [
+        {"date": "12 Apr 2025", "description": "Groceries", "category": "Food", "amount": "₹850.00"},
+        {"date": "11 Apr 2025", "description": "Metro card recharge", "category": "Transport", "amount": "₹500.00"},
+        {"date": "10 Apr 2025", "description": "Electricity bill", "category": "Bills", "amount": "₹2,200.00"},
+        {"date": "09 Apr 2025", "description": "Doctor visit", "category": "Health", "amount": "₹800.00"},
+        {"date": "08 Apr 2025", "description": "Netflix subscription", "category": "Entertainment", "amount": "₹649.00"},
+        {"date": "07 Apr 2025", "description": "New shoes", "category": "Shopping", "amount": "₹3,200.00"},
+        {"date": "05 Apr 2025", "description": "Dinner with friends", "category": "Food", "amount": "₹1,450.00"},
+    ]
+    category_breakdown = [
+        {"category": "Shopping", "amount": "₹3,200.00", "percentage": 25, "color": "var(--color-gold)"},
+        {"category": "Other", "amount": "₹2,801.75", "percentage": 22, "color": "var(--color-grey)"},
+        {"category": "Food", "amount": "₹2,300.00", "percentage": 18, "color": "var(--color-darkgreen)"},
+        {"category": "Bills", "amount": "₹2,200.00", "percentage": 17, "color": "var(--color-blue)"},
+        {"category": "Health", "amount": "₹800.00", "percentage": 6, "color": "var(--color-red)"},
+        {"category": "Entertainment", "amount": "₹649.00", "percentage": 5, "color": "var(--color-purple)"},
+        {"category": "Transport", "amount": "₹500.00", "percentage": 4, "color": "var(--color-purple-light)"},
+    ]
+
+    return templates.TemplateResponse(
+        request,
+        "profile.html",
+        {
+            "request": request,
+            "user_info": user_info,
+            "summary_stats": summary_stats,
+            "transactions": transactions,
+            "category_breakdown": category_breakdown
+        }
+    )
 
 @app.get("/terms", response_class=HTMLResponse)
 def terms(request: Request):
@@ -87,16 +130,6 @@ def terms(request: Request):
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy(request: Request):
     return templates.TemplateResponse(request, "privacy.html")
-
-
-@app.get("/logout")
-def logout():
-    return "Logout — coming in Step 3"
-
-
-@app.get("/profile")
-def profile():
-    return "Profile page — coming in Step 4"
 
 
 @app.get("/expenses/add")

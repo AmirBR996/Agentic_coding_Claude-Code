@@ -3,109 +3,316 @@
 {% block title %}My Profile — Spendly{% endblock %}
 
 {% block content %}
-<section class="profile-section">
-    <div class="profile-card">
-        <div class="profile-header">
-            <div class="profile-avatar">
-                {{ user['name'][0] | upper }}
-            </div>
-            <h1 class="profile-name">{{ user['name'] }}</h1>
-        </div>
-
-        <div class="profile-details">
-            <div class="detail-row">
-                <span class="detail-label">Email Address</span>
-                <span class="detail-value">{{ user['email'] }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Account Status</span>
-                <span class="detail-value status-active">Active</span>
-            </div>
-        </div>
-
-        <div class="profile-actions">
-            <a href="/" class="btn-secondary">Back to Dashboard</a>
+<div class="profile-wrapper">
+    <!-- User Header Card -->
+    <div class="user-header-card">
+        <div class="user-avatar">{{ user_info.initials }}</div>
+        <div class="user-meta">
+            <h1 class="user-name">{{ user_info.name }}</h1>
+            <p class="user-email">{{ user_info.email }}</p>
+            <p class="user-membership">Member since {{ user_info.member_since }}</p>
         </div>
     </div>
-</section>
+
+    <!-- Summary Stats Row -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <span class="stat-label">TOTAL SPENT</span>
+            <span class="stat-value">{{ summary_stats.total_spent }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">TRANSACTIONS</span>
+            <span class="stat-value">{{ summary_stats.transaction_count }}</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">TOP CATEGORY</span>
+            <span class="stat-value">{{ summary_stats.top_category }}</span>
+        </div>
+    </div>
+
+    <div class="main-grid">
+        <!-- Recent Transactions -->
+        <section class="transactions-section">
+            <h2 class="section-title">Recent Transactions</h2>
+            <div class="table-container">
+                <table class="tx-table">
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>DESCRIPTION</th>
+                            <th>CATEGORY</th>
+                            <th class="text-right">AMOUNT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                        <tr>
+                            <td>{{ tx.date }}</td>
+                            <td class="desc">{{ tx.description }}</td>
+                            <td><span class="cat-badge badge-{{ tx.category | lower | replace(' ', '-') }}">{{ tx.category }}</span></td>
+                            <td class="text-right amount">{{ tx.amount }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Category Breakdown -->
+        <section class="breakdown-section">
+            <h2 class="section-title">By Category</h2>
+            <div class="category-list">
+                {% for cat in category_breakdown %}
+                <div class="category-row">
+                    <div class="row-header">
+                        <span class="cat-label">{{ cat.category }}</span>
+                        <span class="cat-val">{{ cat.amount }}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: {{ cat.percentage }}%; background-color: {{ cat.color }};"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
 
 <style>
-    .profile-section {
-        display: flex;
-        justify-content: center;
-        padding: 4rem 1rem;
+    :root {
+        --profile-bg: #fcfcfc;
+        --card-bg: #ffffff;
+        --border-light: #efefef;
+        --text-main: #1a1a1a;
+        --text-muted: #757575;
+        --gold: #c5a059;
+        --grey: #7d7d7d;
+        --darkgreen: #2d4a3e;
+        --blue: #5b86b5;
+        --red: #b55b5b;
+        --purple: #8a5bca;
+        --purple-light: #b58aca;
     }
 
-    .profile-card {
-        background: var(--card-bg, #ffffff);
-        border: 1px solid var(--border-color, #e5e7eb);
-        border-radius: 1rem;
-        width: 100%;
-        max-width: 500px;
+    .profile-wrapper {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .user-header-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
         padding: 2rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        text-align: center;
-    }
-
-    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
         margin-bottom: 2rem;
     }
 
-    .profile-avatar {
-        width: 80px;
-        height: 80px;
-        background: var(--primary-color, #4f46e5);
+    .user-avatar {
+        width: 64px;
+        height: 64px;
+        background: #1a3a2a; /* Dark green from reference */
         color: white;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 2rem;
+        font-size: 1.25rem;
         font-weight: 600;
-        margin: 0 auto 1rem;
+        flex-shrink: 0;
     }
 
-    .profile-name {
-        font-family: 'DM Serif Display', serif;
-        font-size: 1.75rem;
-        color: var(--text-main, #111827);
+    .user-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .user-name {
         margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-main);
+        font-family: 'DM Serif Display', serif;
     }
 
-    .profile-details {
-        text-align: left;
+    .user-email {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .user-membership {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        opacity: 0.8;
+    }
+
+    .stats-container {
+
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
         margin-bottom: 2rem;
-        border-top: 1px solid var(--border-color, #e5e7eb);
-        padding-top: 1.5rem;
     }
 
-    .detail-row {
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        letter-spacing: 0.05em;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: var(--text-main);
+    }
+
+    .main-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        color: var(--text-main);
+    }
+
+    /* Transactions Table */
+    .table-container {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .tx-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .tx-table th {
+        text-align: left;
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-light);
+        letter-spacing: 0.05em;
+    }
+
+    .tx-table td {
+        padding: 1rem;
+        font-size: 0.9rem;
+        border-bottom: 1px solid var(--border-light);
+        color: var(--text-main);
+    }
+
+    .tx-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .tx-table .desc {
+        font-weight: 400;
+    }
+
+    .tx-table .amount {
+        font-weight: 500;
+    }
+
+    .text-right {
+        text-align: right;
+    }
+
+    /* Category Badges */
+    .cat-badge {
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+    .badge-food { background: #fef3c7; color: #92400e; }
+    .badge-transport { background: #fef9c3; color: #854d0e; }
+    .badge-bills { background: #e0f2fe; color: #075985; }
+    .badge-health { background: #fee2e2; color: #991b1b; }
+    .badge-entertainment { background: #f3e8ff; color: #6b21a8; }
+    .badge-shopping { background: #fef3c7; color: #92400e; }
+
+    /* Breakdown Section */
+    .breakdown-section {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .category-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .category-row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .row-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 1rem;
+        align-items: center;
+        font-size: 0.85rem;
     }
 
-    .detail-label {
-        color: var(--text-muted, #6b7280);
-        font-size: 0.875rem;
+    .cat-label {
+        color: var(--text-main);
+        font-weight: 400;
     }
 
-    .detail-value {
-        color: var(--text-main, #111827);
-        font-weight: 500;
-        font-size: 0.875rem;
+    .cat-val {
+        color: var(--text-muted);
+        font-size: 0.8rem;
     }
 
-    .status-active {
-        color: #059669;
-        background: #ecfdf5;
-        padding: 0.125rem 0.5rem;
-        border-radius: 9999px;
+    .progress-bar {
+        height: 4px;
+        background: #f0f0f0;
+        border-radius: 2px;
+        overflow: hidden;
     }
 
-    .profile-actions {
-        display: flex;
-        justify-content: center;
+    .progress-fill {
+        height: 100%;
+        border-radius: 2px;
+    }
+
+    @media (max-width: 850px) {
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+        .main-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
