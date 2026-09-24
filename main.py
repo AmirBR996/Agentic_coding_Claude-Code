@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
-from database.db import init_db, seed_db
+from database.db import init_db, seed_db, get_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -12,6 +13,8 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(SessionMiddleware, secret_key="spendly-secret-key-2026")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -48,9 +51,23 @@ def logout():
     return "Logout — coming in Step 3"
 
 
-@app.get("/profile")
-def profile():
-    return "Profile page — coming in Step 4"
+@app.get("/profile", response_class=HTMLResponse)
+def profile(request: Request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login", status_code=303)
+
+    with get_db() as conn:
+        user = conn.execute(
+            "SELECT name, email FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
+
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    return templates.TemplateResponse(
+        request, "profile.html", {"user": user}
+    )
 
 
 @app.get("/expenses/add")
