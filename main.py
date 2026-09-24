@@ -1,11 +1,10 @@
-from fastapi import FastAPI, Request, Form, Depends, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
-from database.db import init_db, seed_db, get_user_by_email, create_user
-from werkzeug.security import check_password_hash
+from database.db import init_db, seed_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,9 +13,6 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
-
-# Session middleware for cookie-based sessions
-app.add_middleware(SessionMiddleware, secret_key="spendly-dev-secret-key")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -90,6 +86,17 @@ def terms(request: Request):
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy(request: Request):
     return templates.TemplateResponse(request, "privacy.html")
+
+
+@app.get("/logout")
+def logout():
+    return "Logout — coming in Step 3"
+
+
+@app.get("/profile")
+def profile():
+    return "Profile page — coming in Step 4"
+
 
 @app.get("/expenses/add")
 def add_expense(user_id: int = Depends(get_current_user)):
