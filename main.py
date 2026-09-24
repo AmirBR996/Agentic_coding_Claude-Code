@@ -29,6 +29,17 @@ def get_current_user(request: Request):
         raise HTTPException(status_code=303, headers={"Location": "/login"})
     return user_id
 
+# Handle 303 HTTPException as a RedirectResponse
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if exc.status_code == 303:
+        return RedirectResponse(
+            url=exc.headers.get("Location", "/login"),
+            status_code=303
+        )
+    # Fallback to a basic response for other HTTPExceptions to avoid crashing
+    return HTMLResponse(content=f"HTTP Error {exc.status_code}: {exc.detail}", status_code=exc.status_code)
+
 @app.get("/", response_class=HTMLResponse)
 def landing(request: Request):
     return templates.TemplateResponse(request=request, name="landing.html", context={})
@@ -84,11 +95,14 @@ def profile(request: Request, user_id: int = Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    expenses = get_expenses_by_user(user_id)
+    start_date = request.query_params.get("start_date")
+    end_date = request.query_params.get("end_date")
+    expenses = get_expenses_by_user(user_id, start_date, end_date)
 
     # Calculate summary stats
     total_spent = sum(e["amount"] for e in expenses)
     transaction_count = len(expenses)
+
 
     # Find top category
     category_counts = {}
@@ -148,7 +162,9 @@ def profile(request: Request, user_id: int = Depends(get_current_user)):
             "user_info": user_info,
             "summary_stats": summary_stats,
             "transactions": transactions,
-            "category_breakdown": category_breakdown
+            "category_breakdown": category_breakdown,
+            "start_date": start_date,
+            "end_date": end_date
         }
     )
 

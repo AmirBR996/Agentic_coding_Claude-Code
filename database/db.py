@@ -26,15 +26,24 @@ def get_user_by_id(user_id: int):
     with get_db() as conn:
         return conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
 
-def get_expenses_by_user(user_id: int):
+def get_expenses_by_user(user_id: int, start_date: str = None, end_date: str = None):
     """
-    Retrieves all expenses for a specific user.
+    Retrieves expenses for a specific user, optionally filtered by date range.
     """
+    query = "SELECT * FROM expenses WHERE user_id = ?"
+    params = [user_id]
+
+    if start_date:
+        query += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND date <= ?"
+        params.append(end_date)
+
+    query += " ORDER BY date DESC"
+
     with get_db() as conn:
-        return conn.execute(
-            "SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC",
-            (user_id,)
-        ).fetchall()
+        return conn.execute(query, params).fetchall()
 
 def create_user(name: str, email: str, password: str):
     """

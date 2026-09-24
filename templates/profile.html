@@ -30,6 +30,24 @@
         </div>
     </div>
 
+    <!-- Date Filter Form -->
+    <div class="filter-card">
+        <form method="GET" action="/profile" class="filter-form">
+            <div class="filter-group">
+                <label for="start_date">From</label>
+                <input type="date" id="start_date" name="start_date" value="{{ start_date or '' }}">
+            </div>
+            <div class="filter-group">
+                <label for="end_date">To</label>
+                <input type="date" id="end_date" name="end_date" value="{{ end_date or '' }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">Filter</button>
+                <a href="/profile" class="btn-clear">Clear</a>
+            </div>
+        </form>
+    </div>
+
     <div class="main-grid">
         <!-- Recent Transactions -->
         <section class="transactions-section">
@@ -99,6 +117,77 @@
         margin: 0 auto;
         padding: 2rem 1rem;
         font-family: 'DM Sans', sans-serif;
+    }
+
+    .filter-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 2rem;
+    }
+
+    .filter-form {
+        display: flex;
+        align-items: flex-end;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        letter-spacing: 0.05em;
+    }
+
+    .filter-group input {
+        padding: 0.5rem;
+        border: 1px solid var(--border-light);
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        color: var(--text-main);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .btn-filter {
+        background: #1a3a2a;
+        color: white;
+        border: none;
+        padding: 0.6rem 1.2rem;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        font-family: inherit;
+        transition: opacity 0.2s;
+    }
+
+    .btn-filter:hover {
+        opacity: 0.9;
+    }
+
+    .btn-clear {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+
+    .btn-clear:hover {
+        color: var(--text-main);
     }
 
     .user-header-card {
