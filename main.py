@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
-from database.db import init_db, seed_db, get_user_by_email, create_user
+from database.db import init_db, seed_db, get_user_by_email, create_user, get_user_by_id, get_expenses_by_user
 from werkzeug.security import check_password_hash
 
 @asynccontextmanager
@@ -31,12 +31,12 @@ def get_current_user(request: Request):
 
 @app.get("/", response_class=HTMLResponse)
 def landing(request: Request):
-    return templates.TemplateResponse(request, "landing.html")
+    return templates.TemplateResponse(request=request, name="landing.html", context={})
 
 @app.get("/register", response_class=HTMLResponse)
 def register(request: Request):
     error = request.query_params.get("error")
-    return templates.TemplateResponse(request, "register.html", {"request": request, "error": error})
+    return templates.TemplateResponse(request=request, name="register.html", context={"error": error})
 
 @app.post("/register")
 def register_post(
@@ -62,7 +62,7 @@ def register_post(
 @app.get("/login", response_class=HTMLResponse)
 def login(request: Request):
     error = request.query_params.get("error")
-    return templates.TemplateResponse(request, "login.html", {"request": request, "error": error})
+    return templates.TemplateResponse(request=request, name="login.html", context={"error": error})
 
 @app.post("/login")
 def login_post(request: Request, email: str = Form(...), password: str = Form(...)):
@@ -80,42 +80,71 @@ def logout(request: Request):
 
 @app.get("/profile", response_class=HTMLResponse)
 def profile(request: Request, user_id: int = Depends(get_current_user)):
-    # Hardcoded data to match reference image
+    user = get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    expenses = get_expenses_by_user(user_id)
+
+    # Calculate summary stats
+    total_spent = sum(e["amount"] for e in expenses)
+    transaction_count = len(expenses)
+
+    # Find top category
+    category_counts = {}
+    for e in expenses:
+        cat = e["category"]
+        category_counts[cat] = category_counts.get(cat, 0) + e["amount"]
+
+    top_category = "None"
+    if category_counts:
+        top_category = max(category_counts, key=category_counts.get)
+
     user_info = {
-        "name": "Amir",
-        "email": "amir@gmail.com",
-        "member_since": "January 2024",
-        "initials": "A"
+        "name": user["name"],
+        "email": user["email"],
+        "member_since": user["created_at"][:10], # Simplified date
+        "initials": user["name"][0].upper() if user["name"] else "U"
     }
+
     summary_stats = {
-        "total_spent": "₹12,450.75",
-        "transaction_count": 8,
-        "top_category": "Food"
+        "total_spent": f"₹{total_spent:,.2f}",
+        "transaction_count": transaction_count,
+        "top_category": top_category
     }
+
     transactions = [
-        {"date": "12 Apr 2025", "description": "Groceries", "category": "Food", "amount": "₹850.00"},
-        {"date": "11 Apr 2025", "description": "Metro card recharge", "category": "Transport", "amount": "₹500.00"},
-        {"date": "10 Apr 2025", "description": "Electricity bill", "category": "Bills", "amount": "₹2,200.00"},
-        {"date": "09 Apr 2025", "description": "Doctor visit", "category": "Health", "amount": "₹800.00"},
-        {"date": "08 Apr 2025", "description": "Netflix subscription", "category": "Entertainment", "amount": "₹649.00"},
-        {"date": "07 Apr 2025", "description": "New shoes", "category": "Shopping", "amount": "₹3,200.00"},
-        {"date": "05 Apr 2025", "description": "Dinner with friends", "category": "Food", "amount": "₹1,450.00"},
-    ]
-    category_breakdown = [
-        {"category": "Shopping", "amount": "₹3,200.00", "percentage": 25, "color": "var(--color-gold)"},
-        {"category": "Other", "amount": "₹2,801.75", "percentage": 22, "color": "var(--color-grey)"},
-        {"category": "Food", "amount": "₹2,300.00", "percentage": 18, "color": "var(--color-darkgreen)"},
-        {"category": "Bills", "amount": "₹2,200.00", "percentage": 17, "color": "var(--color-blue)"},
-        {"category": "Health", "amount": "₹800.00", "percentage": 6, "color": "var(--color-red)"},
-        {"category": "Entertainment", "amount": "₹649.00", "percentage": 5, "color": "var(--color-purple)"},
-        {"category": "Transport", "amount": "₹500.00", "percentage": 4, "color": "var(--color-purple-light)"},
+        {"date": e["date"], "description": e["description"], "category": e["category"], "amount": f"₹{e['amount']:,.2f}"}
+        for e in expenses
     ]
 
+    # Category breakdown
+    category_colors = {
+        "Shopping": "var(--gold)",
+        "Food": "var(--darkgreen)",
+        "Bills": "var(--blue)",
+        "Health": "var(--red)",
+        "Entertainment": "var(--purple)",
+        "Transport": "var(--purple-light)",
+    }
+
+    category_breakdown = []
+    for cat, amount in category_counts.items():
+        percentage = (amount / total_spent * 100) if total_spent > 0 else 0
+        category_breakdown.append({
+            "category": cat,
+            "amount": f"₹{amount:,.2f}",
+            "percentage": round(percentage),
+            "color": category_colors.get(cat, "var(--color-grey)")
+        })
+
+    # Sort breakdown by amount descending
+    category_breakdown.sort(key=lambda x: float(x["amount"].replace("₹", "").replace(",", "")), reverse=True)
+
     return templates.TemplateResponse(
-        request,
-        "profile.html",
-        {
-            "request": request,
+        request=request,
+        name="profile.html",
+        context={
             "user_info": user_info,
             "summary_stats": summary_stats,
             "transactions": transactions,
@@ -125,11 +154,11 @@ def profile(request: Request, user_id: int = Depends(get_current_user)):
 
 @app.get("/terms", response_class=HTMLResponse)
 def terms(request: Request):
-    return templates.TemplateResponse(request, "terms.html")
+    return templates.TemplateResponse(request=request, name="terms.html", context={})
 
 @app.get("/privacy", response_class=HTMLResponse)
 def privacy(request: Request):
-    return templates.TemplateResponse(request, "privacy.html")
+    return templates.TemplateResponse(request=request, name="privacy.html", context={})
 
 
 @app.get("/expenses/add")

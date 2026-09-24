@@ -19,6 +19,23 @@ def get_user_by_email(email: str):
     with get_db() as conn:
         return conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
 
+def get_user_by_id(user_id: int):
+    """
+    Retrieves a user from the database by their ID.
+    """
+    with get_db() as conn:
+        return conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+
+def get_expenses_by_user(user_id: int):
+    """
+    Retrieves all expenses for a specific user.
+    """
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC",
+            (user_id,)
+        ).fetchall()
+
 def create_user(name: str, email: str, password: str):
     """
     Hashes the password and inserts a new user into the users table.

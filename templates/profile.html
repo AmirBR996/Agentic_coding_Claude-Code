@@ -69,7 +69,7 @@
                         <span class="cat-val">{{ cat.amount }}</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: {{ cat.percentage }}%; background-color: {{ cat.color }};"></div>
+                        <div class="progress-fill" style="width: {{ cat.percentage }}%; background-color: {{ cat.color }};" data-percentage="{{ cat.percentage }}"></div>
                     </div>
                 </div>
                 {% endfor %}
@@ -257,7 +257,6 @@
     .badge-entertainment { background: #f3e8ff; color: #6b21a8; }
     .badge-shopping { background: #fef3c7; color: #92400e; }
 
-    /* Breakdown Section */
     .breakdown-section {
         background: var(--card-bg);
         border: 1px solid var(--border-light);
@@ -268,20 +267,20 @@
     .category-list {
         display: flex;
         flex-direction: column;
-        gap: 1.5rem;
+        gap: 2rem;
     }
 
     .category-row {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
 
     .row-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.85rem;
+        font-size: 0.95rem;
     }
 
     .cat-label {
@@ -290,20 +289,32 @@
     }
 
     .cat-val {
-        color: var(--text-muted);
-        font-size: 0.8rem;
+        color: var(--text-main);
+        font-size: 0.9rem;
+        opacity: 0.8;
     }
 
     .progress-bar {
-        height: 4px;
+        height: 6px;
         background: #f0f0f0;
-        border-radius: 2px;
-        overflow: hidden;
+        border-radius: 3px;
+        overflow: visible;
     }
 
     .progress-fill {
         height: 100%;
-        border-radius: 2px;
+        border-radius: 3px;
+        position: relative;
+    }
+
+    .progress-fill::after {
+        content: attr(data-percentage) '%';
+        position: absolute;
+        right: 0;
+        top: -18px;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-weight: 500;
     }
 
     @media (max-width: 850px) {
