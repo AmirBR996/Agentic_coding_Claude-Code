@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse , RedirectResponse
+from fastapi import FastAPI, Request, Form, Depends, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
-from database.db import init_db, seed_db
+from database.db import init_db, seed_db, get_user_by_email, create_user
+from werkzeug.security import check_password_hash
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
