@@ -4,7 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
-from database.db import init_db, seed_db, get_user_by_email, create_user, get_user_by_id, get_expenses_by_user, create_expense
+from database.db import (
+    init_db, seed_db, get_user_by_email, create_user,
+    get_user_by_id, get_expenses_by_user, create_expense,
+    get_expense_by_id, update_expense, delete_expense
+)
 from werkzeug.security import check_password_hash
 
 @asynccontextmanager
@@ -128,7 +132,7 @@ def profile(request: Request, user_id: int = Depends(get_current_user)):
     }
 
     transactions = [
-        {"date": e["date"], "description": e["description"], "category": e["category"], "amount": f"₹{e['amount']:,.2f}"}
+        {"id": e["id"], "date": e["date"], "description": e["description"], "category": e["category"], "amount": f"₹{e['amount']:,.2f}"}
         for e in expenses
     ]
 
@@ -215,10 +219,48 @@ def add_expense_post(
 
     return RedirectResponse(url="/profile", status_code=303)
 
-@app.get("/expenses/{id}/edit")
-def edit_expense(id: int, user_id: int = Depends(get_current_user)):
-    return "Edit expense — coming in Step 8"
+@app.get("/expenses/{id}/edit", response_class=HTMLResponse)
+def edit_expense(id: int, request: Request, user_id: int = Depends(get_current_user)):
+    expense = get_expense_by_id(id, user_id)
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    error = request.query_params.get("error")
+    return templates.TemplateResponse(
+        request=request,
+        name="edit_expense.html",
+        context={"expense": expense, "error": error}
+    )
+
+@app.post("/expenses/{id}/edit")
+def edit_expense_post(
+    id: int,
+    request: Request,
+    user_id: int = Depends(get_current_user),
+    amount: float = Form(...),
+    category: str = Form(...),
+    date: str = Form(...),
+    description: str = Form(None)
+):
+    # Re-verify ownership before updating
+    expense = get_expense_by_id(id, user_id)
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    if amount <= 0:
+        return RedirectResponse(url=f"/expenses/{id}/edit?error=Amount+must+be+greater+than+zero", status_code=303)
+
+    if not category or not date:
+        return RedirectResponse(url=f"/expenses/{id}/edit?error=Category+and+date+are+required", status_code=303)
+
+    try:
+        update_expense(id, user_id, amount, category, date, description)
+    except Exception as e:
+        return RedirectResponse(url=f"/expenses/{id}/edit?error=Database+error:+{str(e)}", status_code=303)
+
+    return RedirectResponse(url="/profile", status_code=303)
 
 @app.get("/expenses/{id}/delete")
-def delete_expense(id: int, user_id: int = Depends(get_current_user)):
-    return "Delete expense — coming in Step 9"
+def delete_expense_route(id: int, user_id: int = Depends(get_current_user)):
+    delete_expense(id, user_id)
+    return RedirectResponse(url="/profile", status_code=303)

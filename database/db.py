@@ -26,7 +26,18 @@ def get_user_by_id(user_id: int):
     with get_db() as conn:
         return conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
 
+def get_expense_by_id(expense_id: int, user_id: int):
+    """
+    Retrieves a specific expense for a user by its ID.
+    """
+    with get_db() as conn:
+        return conn.execute(
+            "SELECT * FROM expenses WHERE id = ? AND user_id = ?",
+            (expense_id, user_id)
+        ).fetchone()
+
 def get_expenses_by_user(user_id: int, start_date: str = None, end_date: str = None):
+
     """
     Retrieves expenses for a specific user, optionally filtered by date range.
     """
@@ -72,7 +83,31 @@ def create_expense(user_id: int, amount: float, category: str, date: str, descri
         conn.commit()
         return cursor.lastrowid
 
+def update_expense(expense_id: int, user_id: int, amount: float, category: str, date: str, description: str):
+    """
+    Updates an existing expense record for a specific user.
+    """
+    with get_db() as conn:
+        conn.execute(
+            "UPDATE expenses SET amount = ?, category = ?, date = ?, description = ? WHERE id = ? AND user_id = ?",
+            (amount, category, date, description, expense_id, user_id)
+        )
+        conn.commit()
+
+def delete_expense(expense_id: int, user_id: int):
+    """
+    Deletes an expense record for a specific user.
+    """
+    with get_db() as conn:
+        conn.execute(
+            "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+            (expense_id, user_id)
+        )
+        conn.commit()
+
 def init_db():
+
+
     """
     Creates all tables using CREATE TABLE IF NOT EXISTS.
     """
