@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 from contextlib import asynccontextmanager
-from database.db import init_db, seed_db, get_user_by_email, create_user, get_user_by_id, get_expenses_by_user
+from database.db import init_db, seed_db, get_user_by_email, create_user, get_user_by_id, get_expenses_by_user, create_expense
 from werkzeug.security import check_password_hash
 
 @asynccontextmanager
@@ -181,9 +181,39 @@ def privacy(request: Request):
     return templates.TemplateResponse(request=request, name="privacy.html", context={})
 
 
-@app.get("/expenses/add")
-def add_expense(user_id: int = Depends(get_current_user)):
-    return "Add expense — coming in Step 7"
+from datetime import date
+
+@app.get("/expenses/add", response_class=HTMLResponse)
+def add_expense(request: Request, user_id: int = Depends(get_current_user)):
+    error = request.query_params.get("error")
+    today = date.today().isoformat()
+    return templates.TemplateResponse(
+        request=request,
+        name="add_expense.html",
+        context={"error": error, "today_date": today}
+    )
+
+@app.post("/expenses/add")
+def add_expense_post(
+    request: Request,
+    user_id: int = Depends(get_current_user),
+    amount: float = Form(...),
+    category: str = Form(...),
+    date: str = Form(...),
+    description: str = Form(None)
+):
+    if amount <= 0:
+        return RedirectResponse(url="/expenses/add?error=Amount+must+be+greater+than+zero", status_code=303)
+
+    if not category or not date:
+        return RedirectResponse(url="/expenses/add?error=Category+and+date+are+required", status_code=303)
+
+    try:
+        create_expense(user_id, amount, category, date, description)
+    except Exception as e:
+        return RedirectResponse(url=f"/expenses/add?error=Database+error:+{str(e)}", status_code=303)
+
+    return RedirectResponse(url="/profile", status_code=303)
 
 @app.get("/expenses/{id}/edit")
 def edit_expense(id: int, user_id: int = Depends(get_current_user)):

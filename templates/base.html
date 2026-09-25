@@ -22,6 +22,7 @@
             <div class="nav-links">
                 {% if request.session.get('user_id') %}
                     <a href="/profile" class="{% if request.url.path == '/profile' %}active{% endif %}">Profile</a>
+                    <a href="/expenses/add" class="{% if request.url.path == '/expenses/add' %}active{% endif %}">Add Expense</a>
                     <a href="/analytics" class="{% if request.url.path == '/analytics' %}active{% endif %}">Analytics</a>
                     <a href="/logout">Sign out</a>
                 {% else %}
