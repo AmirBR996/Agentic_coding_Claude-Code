@@ -73,8 +73,8 @@ def test_profile_date_filter_happy_path(client, authenticated_user):
 
     html = response.text
     # Check summary stats: Total spent should be 100 + 200 = 300
-    # Note: The app formats as ₹300.00
-    assert "₹300.00" in html
+    # Note: The app formats as रु.300.00
+    assert "रु.300.00" in html
     assert "2" in html # Transaction count
 
     # Check that only Jan expenses are present
@@ -106,7 +106,7 @@ def test_profile_date_filter_start_only(client, authenticated_user):
     assert "Newest" in html
     assert "Old" not in html
     # Total: 200 + 300 = 500
-    assert "₹500.00" in html
+    assert "रु.500.00" in html
 
 def test_profile_date_filter_end_only(client, authenticated_user):
     """Providing only end_date filters results up to that date."""
@@ -132,7 +132,7 @@ def test_profile_date_filter_end_only(client, authenticated_user):
     assert "Mid" in html
     assert "New" not in html
     # Total: 100 + 200 = 300
-    assert "₹300.00" in html
+    assert "रु.300.00" in html
 
 def test_profile_date_filter_empty_results(client, authenticated_user):
     """Providing a date range with no expenses results in an empty list and zeroed stats."""
@@ -153,7 +153,7 @@ def test_profile_date_filter_empty_results(client, authenticated_user):
     assert response.status_code == 200
 
     html = response.text
-    assert "₹0.00" in html
+    assert "रु.0.00" in html
     assert "0" in html # Count
     assert "Existing" not in html
 

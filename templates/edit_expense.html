@@ -17,7 +17,7 @@
         <div class="auth-card">
             <form method="POST" action="/expenses/{{ expense.id }}/edit" class="expense-form">
                 <div class="form-group">
-                    <label for="amount">Amount (₹)</label>
+                    <label for="amount">Amount (रु.)</label>
                     <input type="number" id="amount" name="amount" class="form-input" step="0.01"
                            value="{{ expense.amount }}" placeholder="0.00" required>
                 </div>

@@ -126,13 +126,13 @@ def profile(request: Request, user_id: int = Depends(get_current_user)):
     }
 
     summary_stats = {
-        "total_spent": f"₹{total_spent:,.2f}",
+        "total_spent": f"रु.{total_spent:,.2f}",
         "transaction_count": transaction_count,
         "top_category": top_category
     }
 
     transactions = [
-        {"id": e["id"], "date": e["date"], "description": e["description"], "category": e["category"], "amount": f"₹{e['amount']:,.2f}"}
+        {"id": e["id"], "date": e["date"], "description": e["description"], "category": e["category"], "amount": f"रु.{e['amount']:,.2f}"}
         for e in expenses
     ]
 
@@ -151,13 +151,13 @@ def profile(request: Request, user_id: int = Depends(get_current_user)):
         percentage = (amount / total_spent * 100) if total_spent > 0 else 0
         category_breakdown.append({
             "category": cat,
-            "amount": f"₹{amount:,.2f}",
+            "amount": f"रु.{amount:,.2f}",
             "percentage": round(percentage),
             "color": category_colors.get(cat, "var(--color-grey)")
         })
 
     # Sort breakdown by amount descending
-    category_breakdown.sort(key=lambda x: float(x["amount"].replace("₹", "").replace(",", "")), reverse=True)
+    category_breakdown.sort(key=lambda x: float(x["amount"].replace("रु.", "").replace(",", "")), reverse=True)
 
     return templates.TemplateResponse(
         request=request,
