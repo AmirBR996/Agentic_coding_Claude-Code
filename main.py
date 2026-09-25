@@ -168,6 +168,10 @@ def profile(request: Request, user_id: int = Depends(get_current_user)):
         }
     )
 
+@app.get("/analytics", response_class=HTMLResponse)
+def analytics(request: Request, user_id: int = Depends(get_current_user)):
+    return templates.TemplateResponse(request=request, name="analytics.html", context={})
+
 @app.get("/terms", response_class=HTMLResponse)
 def terms(request: Request):
     return templates.TemplateResponse(request=request, name="terms.html", context={})

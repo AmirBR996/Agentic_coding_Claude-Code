@@ -179,3 +179,9 @@ rather than "this is wrong."
 - **Plain language**: students are comfortable with 
   code but new to security thinking. Explain *why* 
   something matters, not just *what's* wrong.
+
+
+
+
+  
+  
